@@ -1,0 +1,10 @@
+{
+  "description": "This mobile application offers a user-friendly interface for seamless navigation and interaction, enhancing user experience for on-the-go access.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
