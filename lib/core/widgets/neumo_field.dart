@@ -7,6 +7,7 @@ class NeumoField extends StatelessWidget {
     this.label,
     this.value,
     this.onChanged,
+    this.controller,
     this.placeholder,
     this.keyboardType = TextInputType.text,
     this.icon,
@@ -17,6 +18,7 @@ class NeumoField extends StatelessWidget {
   final String? label;
   final String? value;
   final ValueChanged<String>? onChanged;
+  final TextEditingController? controller;
   final String? placeholder;
   final TextInputType keyboardType;
   final IconData? icon;
@@ -39,7 +41,7 @@ class NeumoField extends StatelessWidget {
           const SizedBox(height: 6),
         ],
         TextField(
-          controller: value == null ? null : TextEditingController(text: value),
+          controller: controller ?? (value == null ? null : TextEditingController(text: value)),
           onChanged: onChanged,
           obscureText: obscure,
           keyboardType: keyboardType,
