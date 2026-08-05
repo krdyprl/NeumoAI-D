@@ -19,3 +19,6 @@ logs/
 .dart_tool/
 .idea/
 *.iml
+
+# Legacy React project archived
+dump_file/

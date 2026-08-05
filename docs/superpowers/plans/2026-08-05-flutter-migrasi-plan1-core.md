@@ -4549,7 +4549,7 @@ class _ChildFormScreenState extends ConsumerState<ChildFormScreen> {
       vaccinations: List.of(_vaccinations),
     );
     if (_isEdit) {
-      await ref.read(childrenProvider.notifier).update(child);
+      await ref.read(childrenProvider.notifier).updateChild(child);
     } else {
       await ref.read(childrenProvider.notifier).add(child);
     }
