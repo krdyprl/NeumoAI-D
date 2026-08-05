@@ -11,3 +11,11 @@ logs/
 *.log
 .claude-replay.*
 .tmp-*
+
+# opencode / superpowers scratch
+.superpowers/
+
+# Flutter
+.dart_tool/
+.idea/
+*.iml
