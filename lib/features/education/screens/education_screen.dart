@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -58,7 +59,10 @@ class _EducationScreenState extends ConsumerState<EducationScreen> {
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final ink = dark ? AppColors.darkInk : AppColors.lightInk;
-    final articles = _applyFilter(ref.watch(articlesProvider).valueOrNull ?? const <Article>[]);
+    final all = ref.watch(articlesProvider).valueOrNull ?? const <Article>[];
+    final articles = _applyFilter(all);
+    final featured = all.where((a) => a.id == 'a1').firstOrNull ?? all.firstOrNull;
+    final darurat = all.where((a) => a.tag == 'Darurat').firstOrNull ?? all.lastOrNull;
 
     return Scaffold(
       body: SafeArea(
@@ -66,7 +70,7 @@ class _EducationScreenState extends ConsumerState<EducationScreen> {
           NeumoTopBar(
             title: 'Edukasi Napas',
             right: GestureDetector(
-              onTap: () => context.go('/article?articleId=a6'),
+              onTap: () => context.go('/article?articleId=${darurat?.id}'),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
@@ -91,7 +95,7 @@ class _EducationScreenState extends ConsumerState<EducationScreen> {
                 const SizedBox(height: 16),
                 // Featured
                 GestureDetector(
-                  onTap: () => context.go('/article?articleId=a1'),
+                  onTap: () => context.go('/article?articleId=${featured?.id}'),
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(24),
@@ -105,10 +109,11 @@ class _EducationScreenState extends ConsumerState<EducationScreen> {
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       NeumoChip(tone: NeumoTone.warning, child: const Text('Artikel Unggulan')),
                       const SizedBox(height: 18),
-                      Text('Kenali 4 Tanda Bahaya Napas Cepat pada Anak',
+                      Text(featured?.title ?? '',
                           style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: Colors.white, height: 1.3)),
                       const SizedBox(height: 6),
-                      const Text('4 menit baca · Pneumonia', style: TextStyle(fontSize: 12.5, color: Colors.white70)),
+                      Text('${featured?.readTime ?? ''} baca · ${featured?.category ?? ''}',
+                          style: const TextStyle(fontSize: 12.5, color: Colors.white70)),
                     ]),
                   ),
                 ),

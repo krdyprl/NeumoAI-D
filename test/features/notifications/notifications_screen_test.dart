@@ -61,5 +61,10 @@ void main() {
     await tester.tap(find.text('Hasil skrining Arya tersedia'));
     await tester.pumpAndSettle();
     expect(find.text('result-page'), findsOneWidget);
+
+    // markRead actually flipped the flag
+    final notifs = await container.read(notificationsProvider.future);
+    final n1 = notifs.firstWhere((n) => n.id == 'n1');
+    expect(n1.read, isTrue);
   });
 }
