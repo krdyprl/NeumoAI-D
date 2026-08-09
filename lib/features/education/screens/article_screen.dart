@@ -31,6 +31,10 @@ class ArticleScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final ink = dark ? AppColors.darkInk : AppColors.lightInk;
+    final muted = dark ? AppColors.darkMuted : AppColors.lightMuted;
+    final border = dark ? AppColors.darkBorder : AppColors.lightBorder;
     final articles = ref.watch(articlesProvider).valueOrNull ?? const <Article>[];
     final article = articles.where((a) => a.id == articleId).firstOrNull ?? articles.firstOrNull;
 
@@ -40,7 +44,7 @@ class ArticleScreen extends ConsumerWidget {
           const NeumoTopBar(title: 'Artikel'),
           Expanded(
             child: article == null
-                ? const Center(child: Text('Artikel tidak ditemukan', style: TextStyle(color: AppColors.lightMuted)))
+                ? Center(child: Text('Artikel tidak ditemukan', style: TextStyle(color: muted)))
                 : ListView(
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 96),
                     children: [
@@ -73,15 +77,13 @@ class ArticleScreen extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? AppColors.darkSurface
-                              : AppColors.lightSurface,
+                          color: dark ? AppColors.darkSurface : AppColors.lightSurface,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: AppColors.lightBorder),
+                          border: Border.all(color: border),
                         ),
                         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          const Text('Poin Penting',
-                              style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.lightInk)),
+                          Text('Poin Penting',
+                              style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: ink)),
                           const SizedBox(height: 14),
                           for (var i = 0; i < _points.length; i++)
                             Padding(
@@ -97,7 +99,7 @@ class ArticleScreen extends ConsumerWidget {
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(child: Text(_points[i],
-                                    style: const TextStyle(fontSize: 13.5, color: AppColors.lightInk, height: 1.5))),
+                                    style: TextStyle(fontSize: 13.5, color: ink, height: 1.5))),
                               ]),
                             ),
                         ]),
@@ -107,15 +109,13 @@ class ArticleScreen extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? AppColors.darkSurface
-                              : AppColors.lightSurface,
+                          color: dark ? AppColors.darkSurface : AppColors.lightSurface,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: AppColors.lightBorder),
+                          border: Border.all(color: border),
                         ),
                         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          const Text('Kapan Harus ke Dokter?',
-                              style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.lightInk)),
+                          Text('Kapan Harus ke Dokter?',
+                              style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: ink)),
                           const SizedBox(height: 12),
                           for (final (text, danger) in _redFlags)
                             Padding(
@@ -125,7 +125,7 @@ class ArticleScreen extends ConsumerWidget {
                                 const SizedBox(width: 8),
                                 Expanded(
                                     child: Text(text,
-                                        style: const TextStyle(fontSize: 13.5, color: AppColors.lightInk, height: 1.4))),
+                                        style: TextStyle(fontSize: 13.5, color: ink, height: 1.4))),
                               ]),
                             ),
                         ]),
