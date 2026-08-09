@@ -6,12 +6,16 @@ import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/children/screens/child_form_screen.dart';
 import '../../features/children/screens/children_screen.dart';
+import '../../features/education/screens/article_screen.dart';
 import '../../features/education/screens/education_screen.dart';
 import '../../features/history/screens/history_screen.dart';
 import '../../features/home/screens/home_screen.dart';
 import '../../features/notifications/screens/notifications_screen.dart';
 import '../../features/onboarding/screens/onboarding_screen.dart';
+import '../../features/profile/screens/edit_profile_screen.dart';
+import '../../features/profile/screens/privacy_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
+import '../../features/profile/screens/settings_screen.dart';
 import '../../features/result/screens/result_screen.dart';
 import '../../features/screening/screens/processing_screen.dart';
 import '../../features/screening/screens/record_screen.dart';
@@ -44,11 +48,16 @@ final routerProvider = Provider<GoRouter>((ref) {
           childId: state.uri.queryParameters['childId'],
         ),
       ),
-      GoRoute(path: '/article', builder: (_, __) => const EducationScreen()),
+      GoRoute(
+        path: '/article',
+        builder: (_, state) => ArticleScreen(
+          articleId: state.uri.queryParameters['articleId'],
+        ),
+      ),
       GoRoute(path: '/notifications', builder: (_, __) => const NotificationsScreen()),
-      GoRoute(path: '/edit-profile', builder: (_, __) => const ProfileScreen()),
-      GoRoute(path: '/privacy', builder: (_, __) => const ProfileScreen()),
-      GoRoute(path: '/settings', builder: (_, __) => const ProfileScreen()),
+      GoRoute(path: '/edit-profile', builder: (_, __) => const EditProfileScreen()),
+      GoRoute(path: '/privacy', builder: (_, __) => const PrivacyScreen()),
+      GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
       StatefulShellRoute.indexedStack(
         builder: (_, __, navigationShell) => AppShell(navigationShell: navigationShell),
         branches: [
