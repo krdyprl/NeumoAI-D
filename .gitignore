@@ -22,6 +22,11 @@ docs/superpowers/
 # Claude
 .claude/
 
+# Local-only config files
+.mise.toml
+AGENTS.md
+CLAUDE.md
+
 # Flutter
 .dart_tool/
 .idea/
