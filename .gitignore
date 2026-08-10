@@ -14,6 +14,13 @@ logs/
 
 # opencode / superpowers scratch
 .superpowers/
+docs/superpowers/
+
+# Figma Make
+.figma/
+
+# Claude
+.claude/
 
 # Flutter
 .dart_tool/
