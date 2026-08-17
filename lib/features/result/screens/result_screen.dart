@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/spacing.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/neumo_button.dart';
 import '../../../core/widgets/neumo_card.dart';
@@ -26,6 +27,7 @@ class ResultScreen extends ConsumerWidget {
     final screenings = ref.watch(screeningsProvider).valueOrNull ?? const [];
     final children = ref.watch(childrenProvider).valueOrNull ?? const [];
     final currentId = ref.watch(currentChildIdProvider).valueOrNull ?? '';
+    final specGrid = ref.watch(lastSpectrogramProvider);
 
     final byParam = screenings.where((s) => s.id == screeningId).firstOrNull;
     final forChild = screenings.where((s) => s.childId == currentId).firstOrNull;
@@ -48,7 +50,7 @@ class ResultScreen extends ConsumerWidget {
           const NeumoTopBar(title: 'Hasil Skrining'),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 96),
+              padding: pagePadding,
               child: Column(mainAxisAlignment: MainAxisAlignment.start, children: [
                 NeumoCard(
                   child: Padding(
@@ -103,7 +105,7 @@ class ResultScreen extends ConsumerWidget {
                       const Text('Visualisasi frekuensi suara batuk yang dianalisis AI.',
                           style: TextStyle(fontSize: 13, color: AppColors.lightMuted)),
                       const SizedBox(height: 12),
-                      ClipRRect(borderRadius: BorderRadius.circular(16), child: Container(color: AppColors.lightBg, padding: const EdgeInsets.all(4), child: const Spectrogram())),
+                      ClipRRect(borderRadius: BorderRadius.circular(16), child: Container(color: AppColors.lightBg, padding: const EdgeInsets.all(4), child: Spectrogram(grid: specGrid))),
                     ])),
                 const SizedBox(height: 16),
                 _Section(title: 'Grad-CAM',
@@ -156,7 +158,7 @@ class ResultScreen extends ConsumerWidget {
                 child: NeumoButton(
                   variant: NeumoVariant.primary,
                   label: 'Skrining Ulang',
-                  onPressed: () => context.go('/symptoms'),
+                  onPressed: () => context.push('/symptoms'),
                 ),
               ),
             ]),

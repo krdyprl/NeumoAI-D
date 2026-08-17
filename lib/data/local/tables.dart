@@ -73,3 +73,17 @@ class Meta extends Table {
   @override
   Set<Column> get primaryKey => {key};
 }
+
+class Accounts extends Table {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  TextColumn get email => text()();
+  TextColumn get phone => text()();
+  TextColumn get emoji => text()();
+  TextColumn get role => text()();
+  TextColumn get passwordHash => text()();
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}

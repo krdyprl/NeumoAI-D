@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/spacing.dart';
 import '../../../core/widgets/neumo_avatar.dart';
 import '../../../core/widgets/neumo_button.dart';
 import '../../../core/widgets/neumo_card.dart';
@@ -28,7 +29,7 @@ class ChildrenScreen extends ConsumerWidget {
                   ? const NeumoEmptyState(
                       icon: '👶', title: 'Belum ada anak', desc: 'Tambahkan anak untuk mulai memantau kesehatan.',)
                   : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 96),
+                      padding: pagePadding,
                       itemCount: children.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 12),
                       itemBuilder: (_, i) {
@@ -70,7 +71,7 @@ class ChildrenScreen extends ConsumerWidget {
                 size: NeumoSize.lg,
                 label: 'Tambah Anak',
                 icon: Icons.add,
-                onPressed: () => context.go('/child-form'),
+                onPressed: () => context.push('/child-form'),
               ),
             ),
           ],

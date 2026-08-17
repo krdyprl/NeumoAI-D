@@ -1,11 +1,23 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sqlite3/sqlite3.dart';
 
+import '../core/audio/cough_recorder.dart';
 import '../core/connectivity/connectivity_service.dart';
+import '../core/ml/cough_classifier.dart';
+import '../core/services/showcase_service.dart';
+import '../core/supabase/supabase_service.dart';
 import '../core/sync/sync_item.dart';
 import '../core/sync/sync_queue.dart';
 import '../core/sync/sync_service.dart';
+import '../core/utils/password.dart';
+import '../data/local/app_database.dart' hide Screening, AppNotification;
+import '../data/local/repositories/local_child_repository.dart';
+import '../data/local/repositories/local_notification_repository.dart';
+import '../data/local/repositories/local_profile_repository.dart';
+import '../data/local/repositories/local_screening_repository.dart';
+import '../data/local/repositories/local_settings_repository.dart';
 import '../data/mock/mock_repositories.dart';
 import '../data/repositories/article_repository.dart';
 import '../data/repositories/child_repository.dart';
@@ -21,21 +33,60 @@ import '../models/health_center.dart';
 import '../models/profile.dart';
 import '../models/screening.dart';
 
-// ── Repository wiring (Mock-first; swap here for Api/local later) ─────────
+// ── Repository wiring (Local Drift-first; swap here for Api later) ─────────
 
-final settingsRepositoryProvider = Provider<SettingsRepository>((ref) => MockSettingsRepository());
+/// True when the bundled native sqlite3 library can be loaded. On some ABIs
+/// (e.g. 32-bit x86 emulators) `sqlite3_flutter_libs` does not ship the native
+/// library, so Drift persistence is unavailable. In that case we fall back to
+/// in-memory Mock repositories so the app still boots and is usable.
+final sqliteAvailableProvider = Provider<bool>((ref) {
+  try {
+    final db = sqlite3.openInMemory();
+    db.dispose();
+    return true;
+  } catch (_) {
+    return false;
+  }
+});
 
-final childRepositoryProvider = Provider<ChildRepository>((ref) => MockChildRepository());
+final appDatabaseProvider = Provider<AppDatabase>((ref) {
+  final db = AppDatabase();
+  ref.onDispose(db.close);
+  return db;
+});
 
-final screeningRepositoryProvider = Provider<ScreeningRepository>((ref) => MockScreeningRepository());
+final settingsRepositoryProvider = Provider<SettingsRepository>(
+    (ref) => ref.watch(sqliteAvailableProvider)
+        ? LocalSettingsRepository(ref.watch(appDatabaseProvider))
+        : MockSettingsRepository());
 
-final notificationRepositoryProvider = Provider<NotificationRepository>((ref) => MockNotificationRepository());
+final showcaseServiceProvider = Provider<ShowcaseService>(
+    (ref) => ShowcaseService(ref.watch(settingsRepositoryProvider)));
+
+final childRepositoryProvider = Provider<ChildRepository>(
+    (ref) => ref.watch(sqliteAvailableProvider)
+        ? LocalChildRepository(ref.watch(appDatabaseProvider))
+        : MockChildRepository());
+
+final screeningRepositoryProvider = Provider<ScreeningRepository>(
+    (ref) => ref.watch(sqliteAvailableProvider)
+        ? LocalScreeningRepository(ref.watch(appDatabaseProvider))
+        : MockScreeningRepository());
+
+final notificationRepositoryProvider = Provider<NotificationRepository>(
+    (ref) => ref.watch(sqliteAvailableProvider)
+        ? LocalNotificationRepository(ref.watch(appDatabaseProvider))
+        : MockNotificationRepository());
 
 final articleRepositoryProvider = Provider<ArticleRepository>((ref) => MockArticleRepository());
 
-final healthCenterRepositoryProvider = Provider<HealthCenterRepository>((ref) => MockHealthCenterRepository());
+final healthCenterRepositoryProvider =
+    Provider<HealthCenterRepository>((ref) => MockHealthCenterRepository());
 
-final profileRepositoryProvider = Provider<ProfileRepository>((ref) => MockProfileRepository());
+final profileRepositoryProvider = Provider<ProfileRepository>(
+    (ref) => ref.watch(sqliteAvailableProvider)
+        ? LocalProfileRepository(ref.watch(appDatabaseProvider))
+        : MockProfileRepository());
 
 // ── Settings / theme / onboarding ──────────────────────────────────────────
 
@@ -103,6 +154,11 @@ class ScreeningsNotifier extends AsyncNotifier<List<Screening>> {
     await ref.read(screeningRepositoryProvider).addScreening(screening);
     state = await AsyncValue.guard(() => ref.read(screeningRepositoryProvider).getScreenings());
   }
+
+  Future<void> updateScreening(Screening screening) async {
+    await ref.read(screeningRepositoryProvider).updateScreening(screening);
+    state = await AsyncValue.guard(() => ref.read(screeningRepositoryProvider).getScreenings());
+  }
 }
 
 final notificationsProvider =
@@ -156,10 +212,76 @@ class CurrentChildIdNotifier extends AsyncNotifier<String> {
   }
 }
 
+// ── Auth (single account-profile) ───────────────────────────────────────────
+
+final authProvider =
+    AsyncNotifierProvider<AuthNotifier, Profile?>(AuthNotifier.new);
+
+class AuthNotifier extends AsyncNotifier<Profile?> {
+  @override
+  Future<Profile?> build() async {
+    final settings = ref.watch(settingsRepositoryProvider);
+    final userId = await settings.getLoggedInUserId();
+    if (userId == null || userId.isEmpty) return null;
+    return ref.read(profileRepositoryProvider).getProfileById(userId);
+  }
+
+  Future<String?> register({
+    required String name,
+    required String email,
+    required String phone,
+    required String password,
+  }) async {
+    final repo = ref.read(profileRepositoryProvider);
+    if (await repo.emailExists(email)) {
+      return 'Email sudah terdaftar. Gunakan email lain atau masuk.';
+    }
+    final profile = Profile(
+      name: name,
+      email: email,
+      phone: phone,
+      emoji: '👩',
+      role: 'Orang Tua',
+    );
+    await repo.createAccount(profile, hashPassword(password));
+    await ref.read(settingsRepositoryProvider).setLoggedInUserId(email);
+    state = AsyncData(profile);
+    return null;
+  }
+
+  Future<String?> login({
+    required String email,
+    required String password,
+  }) async {
+    final repo = ref.read(profileRepositoryProvider);
+    final ok = await repo.verifyPassword(email, hashPassword(password));
+    if (!ok) return 'Email atau kata sandi salah.';
+    final profile = await repo.getProfileByEmail(email);
+    await ref.read(settingsRepositoryProvider).setLoggedInUserId(email);
+    state = AsyncData(profile);
+    return null;
+  }
+
+  Future<void> logout() async {
+    await ref.read(settingsRepositoryProvider).setLoggedInUserId(null);
+    state = const AsyncData(null);
+  }
+}
+
 // ── Connectivity & sync ────────────────────────────────────────────────────
 
 final connectivityServiceProvider =
     Provider<ConnectivityService>((ref) => ConnectivityPlusService());
+
+final coughRecorderProvider = Provider<CoughRecorder>((ref) => CoughRecorder());
+
+final coughClassifierProvider = Provider<CoughClassifier>((ref) => CoughClassifier());
+
+/// Holds the spectrogram grid of the most recent screening (for display).
+final lastSpectrogramProvider = StateProvider<List<List<double>>?>((ref) => null);
+
+final supabaseServiceProvider =
+    Provider<SupabaseService>((ref) => SupabaseService());
 
 final syncQueueProvider = Provider<SyncQueue>((ref) => SyncQueue());
 

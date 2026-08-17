@@ -5,4 +5,11 @@ abstract class SettingsRepository {
   Future<void> setOnboardingDone(bool done);
   Future<String?> getCurrentChildId();
   Future<void> setCurrentChildId(String id);
+  Future<bool> isShowcaseDone(String screen);
+  Future<void> markShowcaseDone(String screen);
+  Future<void> resetShowcase(String screen);
+  Future<bool> isTourDone();
+  Future<void> markTourDone(bool done);
+  Future<String?> getLoggedInUserId();
+  Future<void> setLoggedInUserId(String? id);
 }

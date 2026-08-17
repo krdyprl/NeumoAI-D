@@ -8,10 +8,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:neumoi_d/core/connectivity/connectivity_service.dart';
 import 'package:neumoi_d/core/sync/sync_queue.dart';
 import 'package:neumoi_d/core/theme/app_theme.dart';
+import 'package:neumoi_d/data/mock/mock_repositories.dart';
 import 'package:neumoi_d/features/screening/screens/processing_screen.dart';
 import 'package:neumoi_d/features/screening/screens/record_screen.dart';
 import 'package:neumoi_d/features/screening/screens/symptoms_screen.dart';
 import 'package:neumoi_d/state/app_providers.dart';
+import 'package:showcaseview/showcaseview.dart';
+import '../../helpers/fake_cough_recorder.dart';
 
 class _FakeConnectivity implements ConnectivityService {
   final _controller = StreamController<bool>.broadcast();
@@ -20,10 +23,18 @@ class _FakeConnectivity implements ConnectivityService {
 }
 
 void main() {
-  setUp(() => GoogleFonts.config.allowRuntimeFetching = false);
+  setUp(() {
+    GoogleFonts.config.allowRuntimeFetching = false;
+    ShowcaseView.register(enableShowcase: false);
+  });
+  tearDown(() => ShowcaseView.get().unregister());
 
   testWidgets('symptoms screen advances to record', (tester) async {
     final container = ProviderContainer(overrides: [
+      childRepositoryProvider.overrideWithValue(MockChildRepository()),
+      screeningRepositoryProvider.overrideWithValue(MockScreeningRepository()),
+      settingsRepositoryProvider.overrideWithValue(MockSettingsRepository()),
+      coughRecorderProvider.overrideWithValue(FakeCoughRecorder()),
       connectivityServiceProvider.overrideWithValue(_FakeConnectivity()),
       syncQueueProvider.overrideWithValue(SyncQueue()),
     ]);
@@ -52,6 +63,10 @@ void main() {
   testWidgets('record flow submits a pending screening and enqueues sync', (tester) async {
     final queue = SyncQueue();
     final container = ProviderContainer(overrides: [
+      childRepositoryProvider.overrideWithValue(MockChildRepository()),
+      screeningRepositoryProvider.overrideWithValue(MockScreeningRepository()),
+      settingsRepositoryProvider.overrideWithValue(MockSettingsRepository()),
+      coughRecorderProvider.overrideWithValue(FakeCoughRecorder()),
       connectivityServiceProvider.overrideWithValue(_FakeConnectivity()),
       syncQueueProvider.overrideWithValue(queue),
     ]);

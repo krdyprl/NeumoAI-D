@@ -10,6 +10,8 @@ import 'package:neumoi_d/core/sync/sync_queue.dart';
 import 'package:neumoi_d/core/theme/app_theme.dart';
 import 'package:neumoi_d/features/education/screens/education_screen.dart';
 import 'package:neumoi_d/state/app_providers.dart';
+import 'package:showcaseview/showcaseview.dart';
+import '../../helpers/noop_showcase_service.dart';
 
 class _FakeConnectivity implements ConnectivityService {
   final _controller = StreamController<bool>.broadcast();
@@ -18,7 +20,11 @@ class _FakeConnectivity implements ConnectivityService {
 }
 
 void main() {
-  setUp(() => GoogleFonts.config.allowRuntimeFetching = false);
+  setUp(() {
+    GoogleFonts.config.allowRuntimeFetching = false;
+    ShowcaseView.register(enableShowcase: false);
+  });
+  tearDown(() => ShowcaseView.get().unregister());
 
   testWidgets('education lists articles and filters by category', (tester) async {
     tester.view.physicalSize = const Size(800, 2400);
@@ -29,6 +35,7 @@ void main() {
     final container = ProviderContainer(overrides: [
       connectivityServiceProvider.overrideWithValue(_FakeConnectivity()),
       syncQueueProvider.overrideWithValue(SyncQueue()),
+      showcaseServiceProvider.overrideWithValue(NoopShowcaseService()),
     ]);
     addTearDown(container.dispose);
 
@@ -61,6 +68,7 @@ void main() {
     final container = ProviderContainer(overrides: [
       connectivityServiceProvider.overrideWithValue(_FakeConnectivity()),
       syncQueueProvider.overrideWithValue(SyncQueue()),
+      showcaseServiceProvider.overrideWithValue(NoopShowcaseService()),
     ]);
     addTearDown(container.dispose);
 
@@ -90,6 +98,7 @@ void main() {
     final container = ProviderContainer(overrides: [
       connectivityServiceProvider.overrideWithValue(_FakeConnectivity()),
       syncQueueProvider.overrideWithValue(SyncQueue()),
+      showcaseServiceProvider.overrideWithValue(NoopShowcaseService()),
     ]);
     addTearDown(container.dispose);
 

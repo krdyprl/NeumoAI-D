@@ -1,5 +1,7 @@
 # NeumoAid — Napas Anak Indonesia
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 **NeumoAid (Napas Anak Indonesia)** — platform skrining dini penyakit pneumonia pada anak menggunakan AI analisis suara batuk.
 
 Dibangun untuk orang tua, pengasuh, dan kader Posyandu sebagai deteksi awal pneumonia melalui suara batuk si kecil. Aplikasi bersifat **offline-first**: perekaman, pengolahan audio, dan klasifikasi tetap berfungsi tanpa koneksi internet.
@@ -23,6 +25,9 @@ Dibangun untuk orang tua, pengasuh, dan kader Posyandu sebagai deteksi awal pneu
 - State management: Riverpod (`flutter_riverpod`)
 - Basis data lokal: Drift (SQLite) + `drift_flutter`
 - Routing: `go_router`
+- Rekam audio: `record`
+- Machine Learning on-device: `tflite_flutter` (MobileNetV2 int8)
+- Sinkronisasi & backend: Supabase (`supabase_flutter`)
 - Konektivitas: `connectivity_plus`
 - Font: Google Fonts / Inter
 
@@ -58,11 +63,44 @@ flutter pub get
 flutter run
 ```
 
+Untuk menghubungkan ke Supabase (opsional, untuk sinkronisasi ke website dokter):
+
+```bash
+flutter run \
+  --dart-define=SUPABASE_URL=https://<PROJECT>.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=<ANON_KEY>
+```
+
 Menjalankan codegen Drift (saat model database diubah):
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
 ```
+
+### Kredensial Demo
+
+Akun demo (tersedia otomatis pada instalasi baru):
+
+```
+Email    : demoneumoaid@gmail.com
+Password : 0k8a0r2d0y5naN
+```
+
+### Model Machine Learning
+
+Model TFLite untuk klasifikasi on-device diletakkan di:
+
+```
+assets/models/neumoaid_pneumonia_v1.tflite
+```
+
+Model ini dihasilkan dari notebook training (Kaggle). Referensi pipeline:
+[neumoaid_flutter_pipeline_ai_guide.md](./neumoaid_flutter_pipeline_ai_guide.md).
+
+### Backend & Sinkronisasi
+
+Skema Supabase (tabel `screenings` + bucket `audio`) dan dokumentasi:
+`backend/README.md` serta `docs/supabase-guide.md`.
 
 ## Menjalankan Test
 
@@ -72,4 +110,6 @@ flutter test
 
 ## Lisensi
 
-© 2026 NeumoAid. Skrining AI bukan pengganti diagnosis medis profesional.
+Dilisensikan di bawah [MIT License](./LICENSE). © 2026 NeumoAid.
+
+Skrining AI bukan pengganti diagnosis medis profesional.

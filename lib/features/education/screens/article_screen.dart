@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/spacing.dart';
 import '../../../core/widgets/neumo_button.dart';
 import '../../../core/widgets/neumo_chip.dart';
 import '../../../core/widgets/neumo_top_bar.dart';
@@ -46,7 +47,7 @@ class ArticleScreen extends ConsumerWidget {
             child: article == null
                 ? Center(child: Text('Artikel tidak ditemukan', style: TextStyle(color: muted)))
                 : ListView(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 96),
+                    padding: pagePadding,
                     children: [
                       // Header banner
                       Container(
@@ -135,7 +136,7 @@ class ArticleScreen extends ConsumerWidget {
                         expand: true,
                         size: NeumoSize.lg,
                         label: 'Sudah punya gejala? Cek sekarang',
-                        onPressed: () => context.go('/symptoms'),
+                        onPressed: () => context.push('/symptoms'),
                       ),
                     ],
                   ),

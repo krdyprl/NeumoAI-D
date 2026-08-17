@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:neumoi_d/core/connectivity/connectivity_service.dart';
 import 'package:neumoi_d/core/sync/sync_queue.dart';
 import 'package:neumoi_d/core/theme/app_theme.dart';
+import 'package:neumoi_d/data/mock/mock_repositories.dart';
 import 'package:neumoi_d/features/notifications/screens/notifications_screen.dart';
 import 'package:neumoi_d/state/app_providers.dart';
 
@@ -27,6 +28,8 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     final container = ProviderContainer(overrides: [
+      notificationRepositoryProvider.overrideWithValue(MockNotificationRepository()),
+      settingsRepositoryProvider.overrideWithValue(MockSettingsRepository()),
       connectivityServiceProvider.overrideWithValue(_FakeConnectivity()),
       syncQueueProvider.overrideWithValue(SyncQueue()),
     ]);

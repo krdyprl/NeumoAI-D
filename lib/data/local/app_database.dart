@@ -13,6 +13,7 @@ part 'app_database.g.dart';
     ScreeningSync,
     AppNotifications,
     Meta,
+    Accounts,
   ],
 )
 class AppDatabase extends _$AppDatabase {

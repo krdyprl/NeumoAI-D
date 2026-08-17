@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/services/tour_controller.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/spacing.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/neumo_card.dart';
 import '../../../core/widgets/neumo_chip.dart';
 import '../../../core/widgets/neumo_empty_state.dart';
 import '../../../core/widgets/neumo_segmented.dart';
+import '../../../core/widgets/neumo_showcase.dart';
 import '../../../core/widgets/neumo_top_bar.dart';
 import '../../../data/mock/mock_data.dart';
 import '../../../models/enums.dart';
@@ -24,8 +27,23 @@ class HistoryScreen extends ConsumerStatefulWidget {
 }
 
 class _HistoryScreenState extends ConsumerState<HistoryScreen> {
+  final GlobalKey _tabKey = GlobalKey();
+  final GlobalKey _screeningListKey = GlobalKey();
+  final GlobalKey _growthKey = GlobalKey();
+
   String _tab = 'Skrining';
   String _metric = 'Berat';
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(tourControllerProvider.notifier).registerSteps('/history', [
+        TourStep(_tabKey, 'Riwayat Kesehatan',
+            'Pilih tab Skrining untuk hasil pemeriksaan AI, atau tab Pertumbuhan untuk grafik berat dan tinggi badan.'),
+      ]);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,16 +57,28 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
           const NeumoTopBar(title: 'Riwayat Kesehatan'),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: NeumoSegmented<String>(
-              options: const [('Skrining', 'Skrining'), ('Pertumbuhan', 'Pertumbuhan')],
-              value: _tab,
-              onChanged: (v) => setState(() => _tab = v),
+            child: NeumoShowcase(
+              key: _tabKey,
+              title: 'Pilih Tampilan',
+              description: 'Pilih antara Skrining atau Pertumbuhan untuk melihat data riwayat.',
+              child: NeumoSegmented<String>(
+                options: const [('Skrining', 'Skrining'), ('Pertumbuhan', 'Pertumbuhan')],
+                value: _tab,
+                onChanged: (v) => setState(() => _tab = v),
+              ),
             ),
           ),
           Expanded(
-            child: _tab == 'Skrining'
-                ? _ScreeningList(screenings: childScreenings)
-                : _GrowthTab(currentId: currentId, metric: _metric, onMetric: (m) => setState(() => _metric = m)),
+            child: NeumoShowcase(
+              key: _tab == 'Skrining' ? _screeningListKey : _growthKey,
+              title: _tab == 'Skrining' ? 'Riwayat Skrining' : 'Grafik Pertumbuhan',
+              description: _tab == 'Skrining'
+                  ? 'Tap kartu untuk melihat detail hasil skrining AI.'
+                  : 'Grafik ini menampilkan perkembangan berat dan tinggi badan anak dari waktu ke waktu.',
+              child: _tab == 'Skrining'
+                  ? _ScreeningList(screenings: childScreenings)
+                  : _GrowthTab(currentId: currentId, metric: _metric, onMetric: (m) => setState(() => _metric = m)),
+            ),
           ),
         ]),
       ),
@@ -68,7 +98,7 @@ class _ScreeningList extends StatelessWidget {
         icon: '📋', title: 'Belum ada skrining', desc: 'Hasil skrining anak akan muncul di sini.');
     }
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 96),
+      padding: pagePaddingWithBottomNav,
       itemCount: screenings.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (_, i) {
@@ -79,7 +109,7 @@ class _ScreeningList extends StatelessWidget {
           RiskLevel.low => (NeumoTone.secondary, 'Rendah'),
         };
         return NeumoCard(
-          onTap: () => context.go('/result?screeningId=${s.id}'),
+          onTap: () => context.push('/result?screeningId=${s.id}'),
           interactive: true,
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -138,7 +168,7 @@ class _GrowthTab extends StatelessWidget {
     final labels = records.map((r) => r.month).toList();
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 96),
+      padding: pagePaddingWithBottomNav,
       children: [
         NeumoSegmented<String>(
           options: const [('Berat', 'Berat'), ('Tinggi', 'Tinggi')],

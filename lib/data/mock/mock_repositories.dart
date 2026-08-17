@@ -1,3 +1,4 @@
+import '../../core/utils/password.dart';
 import '../../models/app_notification.dart';
 import '../../models/article.dart';
 import '../../models/child.dart';
@@ -30,6 +31,30 @@ class MockSettingsRepository implements SettingsRepository {
   @override
   Future<void> setCurrentChildId(String id) async =>
       _store['currentChildId'] = id;
+  @override
+  Future<bool> isShowcaseDone(String screen) async =>
+      _store['showcase_$screen'] == '1';
+  @override
+  Future<void> markShowcaseDone(String screen) async =>
+      _store['showcase_$screen'] = '1';
+  @override
+  Future<void> resetShowcase(String screen) async =>
+      _store['showcase_$screen'] = '0';
+  @override
+  Future<bool> isTourDone() async => _store['tour_done'] == '1';
+  @override
+  Future<void> markTourDone(bool done) async =>
+      _store['tour_done'] = done ? '1' : '0';
+  @override
+  Future<String?> getLoggedInUserId() async => _store['logged_in'];
+  @override
+  Future<void> setLoggedInUserId(String? id) async {
+    if (id == null) {
+      _store.remove('logged_in');
+    } else {
+      _store['logged_in'] = id;
+    }
+  }
 }
 
 class MockChildRepository implements ChildRepository {
@@ -72,6 +97,12 @@ class MockScreeningRepository implements ScreeningRepository {
   Future<void> addScreening(Screening screening) async {
     _screenings.insert(0, screening);
   }
+
+  @override
+  Future<void> updateScreening(Screening screening) async {
+    final i = _screenings.indexWhere((s) => s.id == screening.id);
+    if (i >= 0) _screenings[i] = screening;
+  }
 }
 
 class MockNotificationRepository implements NotificationRepository {
@@ -107,11 +138,41 @@ class MockHealthCenterRepository implements HealthCenterRepository {
 }
 
 class MockProfileRepository implements ProfileRepository {
-  Profile _profile = MockData.profile;
+  /// Demo account untuk pengujian di HP.
+  static const String demoEmail = 'demoneumoaid@gmail.com';
+  static const String demoPassword = '0k8a0r2d0y5naN';
+
+  Profile _profile = MockData.profile.copyWith(
+    name: 'Demo NeumoAid',
+    email: demoEmail,
+  );
+  final Map<String, String> _accounts = {
+    demoEmail: hashPassword(demoPassword),
+  };
 
   @override
   Future<Profile> getProfile() async => _profile;
 
   @override
   Future<void> updateProfile(Profile profile) async => _profile = profile;
+
+  @override
+  Future<Profile?> getProfileById(String id) async => _profile;
+
+  @override
+  Future<Profile?> getProfileByEmail(String email) async =>
+      email == _profile.email ? _profile : null;
+
+  @override
+  Future<bool> emailExists(String email) async => _accounts.containsKey(email);
+
+  @override
+  Future<void> createAccount(Profile profile, String passwordHash) async {
+    _profile = profile;
+    _accounts[profile.email] = passwordHash;
+  }
+
+  @override
+  Future<bool> verifyPassword(String email, String passwordHash) async =>
+      _accounts[email] == passwordHash;
 }

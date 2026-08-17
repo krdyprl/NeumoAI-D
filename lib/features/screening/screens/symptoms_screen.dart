@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/services/tour_controller.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/spacing.dart';
 import '../../../core/widgets/neumo_button.dart';
 import '../../../core/widgets/neumo_card.dart';
 import '../../../core/widgets/neumo_segmented.dart';
+import '../../../core/widgets/neumo_showcase.dart';
 import '../../../core/widgets/neumo_top_bar.dart';
 import '../../../models/enums.dart';
 import '../../../state/app_providers.dart';
@@ -20,6 +23,11 @@ class SymptomsScreen extends ConsumerStatefulWidget {
 }
 
 class _SymptomsScreenState extends ConsumerState<SymptomsScreen> {
+  final GlobalKey _symptomKey = GlobalKey();
+  final GlobalKey _durationKey = GlobalKey();
+  final GlobalKey _breathingKey = GlobalKey();
+  final GlobalKey _nextKey = GlobalKey();
+
   final List<String> _selected = ['demam', 'batuk'];
   String _duration = '2-7 hari';
   String _breathing = 'normal';
@@ -43,6 +51,17 @@ class _SymptomsScreenState extends ConsumerState<SymptomsScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(tourControllerProvider.notifier).registerSteps('/symptoms', [
+        TourStep(_symptomKey, 'Pilih Gejala',
+            'Tandai gejala yang dialami si kecil saat ini. Setelah memilih gejala, lanjut ke rekam suara untuk memulai skrining.'),
+      ]);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final currentId = ref.watch(currentChildIdProvider).valueOrNull ?? '';
     final children = ref.watch(childrenProvider).valueOrNull ?? const [];
@@ -56,7 +75,7 @@ class _SymptomsScreenState extends ConsumerState<SymptomsScreen> {
           const NeumoTopBar(title: 'Mulai Skrining'),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 96),
+              padding: pagePadding,
               children: [
                 Row(children: [
                   for (var i = 0; i < 3; i++) ...[
@@ -106,89 +125,170 @@ class _SymptomsScreenState extends ConsumerState<SymptomsScreen> {
                 const SizedBox(height: 4),
                 const Text('Tandai gejala yang dialami si kecil saat ini.', style: TextStyle(fontSize: 13, color: AppColors.lightMuted)),
                 const SizedBox(height: 12),
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 10,
-                  crossAxisSpacing: 10,
-                  childAspectRatio: 1.6,
-                  children: [
-                    for (final s in symptoms)
-                      InkWell(
-                        onTap: () => _toggle(s.id),
-                        borderRadius: BorderRadius.circular(16),
-                        child: Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: _selected.contains(s.id) ? AppColors.lightPrimarySoft : (dark ? AppColors.darkSurface : AppColors.lightSurface),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                                color: _selected.contains(s.id) ? AppColors.primary : AppColors.lightBorder,
-                                width: _selected.contains(s.id) ? 2 : 1),
+                NeumoShowcase(
+                  key: _symptomKey,
+                  title: 'Pilih Gejala',
+                  description: 'Tandai gejala yang dialami si kecil. Beberapa gejala dapat dipilih.',
+                  child: LayoutBuilder(
+                    builder: (context, constraints) => Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        for (final s in symptoms)
+                          SizedBox(
+                            width: (constraints.maxWidth - 10) / 2,
+                            child: _SymptomCard(
+                              option: s,
+                              selected: _selected.contains(s.id),
+                              onTap: () => _toggle(s.id),
+                            ),
                           ),
-                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                            Text(s.icon, style: const TextStyle(fontSize: 22)),
-                            const Spacer(),
-                            Text(s.label,
-                                style: TextStyle(
-                                    fontSize: 13, fontWeight: FontWeight.bold,
-                                    color: _selected.contains(s.id) ? AppColors.primary : ink)),
-                            Text(s.desc, style: const TextStyle(fontSize: 11, color: AppColors.lightMuted)),
-                          ]),
-                        ),
-                      ),
-                  ],
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 20),
                 const Text('Durasi Batuk', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.lightInk)),
                 const SizedBox(height: 10),
-                NeumoSegmented<String>(
-                  options: _durations.map((d) => (d, d)).toList(),
-                  value: _duration,
-                  onChanged: (v) => setState(() => _duration = v),
+                NeumoShowcase(
+                  key: _durationKey,
+                  title: 'Durasi Batuk',
+                  description: 'Pilih berapa lama si kecil mengalami batuk.',
+                  child: NeumoSegmented<String>(
+                    options: _durations.map((d) => (d, d)).toList(),
+                    value: _duration,
+                    onChanged: (v) => setState(() => _duration = v),
+                  ),
                 ),
                 const SizedBox(height: 20),
                 const Text('Pola Pernapasan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.lightInk)),
                 const SizedBox(height: 10),
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 10,
-                  crossAxisSpacing: 10,
-                  childAspectRatio: 2.1,
-                  children: [
-                    for (final (key, label, icon, desc) in _breathingOptions)
-                      InkWell(
-                        onTap: () => setState(() => _breathing = key),
-                        borderRadius: BorderRadius.circular(16),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                                color: _breathing == key ? AppColors.primary : AppColors.lightBorder,
-                                width: _breathing == key ? 2 : 1),
+                NeumoShowcase(
+                  key: _breathingKey,
+                  title: 'Pola Pernapasan',
+                  description: 'Pilih pola napas yang terlihat. "Mengi" dan "tarik napas dalam" adalah tanda serius.',
+                  child: LayoutBuilder(
+                    builder: (context, constraints) => Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        for (final (key, label, icon, desc) in _breathingOptions)
+                          SizedBox(
+                            width: (constraints.maxWidth - 10) / 2,
+                            child: _BreathingCard(
+                              optionKey: key,
+                              label: label,
+                              icon: icon,
+                              desc: desc,
+                              selected: _breathing == key,
+                              onTap: () => setState(() => _breathing = key),
+                            ),
                           ),
-                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-                            Text(icon, style: const TextStyle(fontSize: 20)),
-                            const SizedBox(height: 4),
-                            Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                            Text(desc, style: const TextStyle(fontSize: 11, color: AppColors.lightMuted)),
-                          ]),
-                        ),
-                      ),
-                  ],
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
           Padding(
             padding: const EdgeInsets.all(20),
-            child: NeumoButton(expand: true, size: NeumoSize.lg, label: 'Lanjut Rekam Suara →', onPressed: () => context.go('/record')),
+            child: NeumoShowcase(
+              key: _nextKey,
+              title: 'Lanjut Rekam Suara',
+              description: 'Setelah memilih gejala dan pola napas, rekam bunyi batuk si kecil selama 5 detik.',
+              child: NeumoButton(expand: true, size: NeumoSize.lg, label: 'Lanjut Rekam Suara →', onPressed: () => context.push('/record')),
+            ),
           ),
         ]),
+      ),
+    );
+  }
+}
+
+class _SymptomCard extends StatelessWidget {
+  const _SymptomCard({required this.option, required this.selected, required this.onTap});
+
+  final SymptomOption option;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final ink = dark ? AppColors.darkInk : AppColors.lightInk;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.lightPrimarySoft : (dark ? AppColors.darkSurface : AppColors.lightSurface),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+              color: selected ? AppColors.primary : (dark ? AppColors.darkBorder : AppColors.lightBorder),
+              width: selected ? 2 : 1),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(option.icon, style: const TextStyle(fontSize: 22)),
+            const SizedBox(height: 8),
+            Text(option.label,
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    height: 1.25,
+                    color: selected ? AppColors.primary : ink)),
+            const SizedBox(height: 3),
+            Text(option.desc, style: const TextStyle(fontSize: 11, color: AppColors.lightMuted, height: 1.3)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BreathingCard extends StatelessWidget {
+  const _BreathingCard(
+      {required this.optionKey, required this.label, required this.icon, required this.desc, required this.selected, required this.onTap});
+
+  final String optionKey;
+  final String label;
+  final String icon;
+  final String desc;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: selected ? AppColors.lightPrimarySoft : null,
+          border: Border.all(
+            color: selected ? AppColors.primary : (dark ? AppColors.darkBorder : AppColors.lightBorder),
+            width: selected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(icon, style: const TextStyle(fontSize: 20)),
+            const SizedBox(height: 4),
+            Text(label,
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: selected ? AppColors.primary : (dark ? AppColors.darkInk : AppColors.lightInk))),
+            const SizedBox(height: 2),
+            Text(desc, style: TextStyle(fontSize: 11, color: dark ? AppColors.darkMuted : AppColors.lightMuted)),
+          ],
+        ),
       ),
     );
   }

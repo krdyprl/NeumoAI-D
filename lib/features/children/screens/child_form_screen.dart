@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/spacing.dart';
 import '../../../core/widgets/neumo_button.dart';
 import '../../../core/widgets/neumo_field.dart';
 import '../../../core/widgets/neumo_segmented.dart';
@@ -129,7 +130,7 @@ class _ChildFormScreenState extends ConsumerState<ChildFormScreen> {
           NeumoTopBar(title: _isEdit ? 'Edit Anak' : 'Tambah Anak'),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 96),
+              padding: pagePadding,
               children: [
                 Text('Data Anak', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: ink)),
                 const SizedBox(height: 16),

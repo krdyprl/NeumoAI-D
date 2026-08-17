@@ -40,6 +40,14 @@ dependencies:
   drift_flutter: ^0.2.0
   sqlite3_flutter_libs: ^0.5.28
   go_router: ^16.0.0
+  crypto: ^3.0.5
+  sqlite3: ^2.9.4
+  showcaseview: ^5.1.0
+  supabase_flutter: ^2.8.4
+  record: ^6.2.1
+  path_provider: ^2.1.4
+  http: ^1.2.2
+  tflite_flutter: ^0.11.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -68,6 +76,10 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/models/
 
   fonts:
     - family: Inter

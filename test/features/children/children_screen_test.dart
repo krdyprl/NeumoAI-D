@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:neumoi_d/core/connectivity/connectivity_service.dart';
 import 'package:neumoi_d/core/sync/sync_queue.dart';
 import 'package:neumoi_d/core/theme/app_theme.dart';
+import 'package:neumoi_d/data/mock/mock_repositories.dart';
 import 'package:neumoi_d/features/children/screens/child_form_screen.dart';
 import 'package:neumoi_d/features/children/screens/children_screen.dart';
 import 'package:neumoi_d/state/app_providers.dart';
@@ -23,6 +24,8 @@ void main() {
 
   testWidgets('children screen lists mock children', (tester) async {
     final container = ProviderContainer(overrides: [
+      childRepositoryProvider.overrideWithValue(MockChildRepository()),
+      settingsRepositoryProvider.overrideWithValue(MockSettingsRepository()),
       connectivityServiceProvider.overrideWithValue(_FakeConnectivity()),
       syncQueueProvider.overrideWithValue(SyncQueue()),
     ]);
@@ -48,6 +51,8 @@ void main() {
 
   testWidgets('child form adds a new child', (tester) async {
     final container = ProviderContainer(overrides: [
+      childRepositoryProvider.overrideWithValue(MockChildRepository()),
+      settingsRepositoryProvider.overrideWithValue(MockSettingsRepository()),
       connectivityServiceProvider.overrideWithValue(_FakeConnectivity()),
       syncQueueProvider.overrideWithValue(SyncQueue()),
     ]);

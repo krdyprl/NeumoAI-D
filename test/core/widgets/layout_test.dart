@@ -13,7 +13,7 @@ void main() {
     GoogleFonts.config.allowRuntimeFetching = false;
   });
 
-  testWidgets('NeumoTopBar shows title and back pops navigation', (tester) async {
+  testWidgets('NeumoTopBar hides back when nothing to pop', (tester) async {
     await tester.pumpWidget(MaterialApp(
       theme: buildLightTheme(),
       home: Builder(builder: (context) {
@@ -21,7 +21,22 @@ void main() {
       }),
     ));
     expect(find.text('Riwayat'), findsOneWidget);
+    expect(find.byIcon(Icons.arrow_back_ios_new), findsNothing);
+  });
+
+  testWidgets('NeumoTopBar shows back when onBack provided and triggers it', (tester) async {
+    var popped = false;
+    await tester.pumpWidget(MaterialApp(
+      theme: buildLightTheme(),
+      home: Builder(builder: (context) {
+        return Scaffold(
+          body: NeumoTopBar(title: 'Riwayat', onBack: () => popped = true),
+        );
+      }),
+    ));
     expect(find.byIcon(Icons.arrow_back_ios_new), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.arrow_back_ios_new));
+    expect(popped, isTrue);
   });
 
   testWidgets('NeumoBottomNav renders four tabs and reports selection', (tester) async {

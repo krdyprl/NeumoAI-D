@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/services/tour_controller.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/spacing.dart';
 import '../../../core/widgets/neumo_chip.dart';
 import '../../../core/widgets/neumo_field.dart';
+import '../../../core/widgets/neumo_showcase.dart';
 import '../../../core/widgets/neumo_top_bar.dart';
 import '../../../models/article.dart';
 import '../../../state/app_providers.dart';
@@ -18,6 +21,11 @@ class EducationScreen extends ConsumerStatefulWidget {
 }
 
 class _EducationScreenState extends ConsumerState<EducationScreen> {
+  final GlobalKey _searchKey = GlobalKey();
+  final GlobalKey _featuredKey = GlobalKey();
+  final GlobalKey _categoryKey = GlobalKey();
+  final GlobalKey _articlesKey = GlobalKey();
+
   static const List<String> _cats = ['Semua', 'Pneumonia', 'Deteksi', 'Gizi', 'Darurat'];
 
   static const List<(String, String, String, List<Color>)> _diseases = [
@@ -42,6 +50,17 @@ class _EducationScreenState extends ConsumerState<EducationScreen> {
   void dispose() {
     _search.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(tourControllerProvider.notifier).registerSteps('/education', [
+        TourStep(_searchKey, 'Edukasi Napas',
+            'Cari artikel tentang pneumonia, gizi, atau kesehatan anak. Baca rekomendasi penting untuk memahami kondisi si kecil.'),
+      ]);
+    });
   }
 
   List<Article> _applyFilter(List<Article> all) {
@@ -70,7 +89,7 @@ class _EducationScreenState extends ConsumerState<EducationScreen> {
           NeumoTopBar(
             title: 'Edukasi Napas',
             right: GestureDetector(
-              onTap: () => context.go('/article?articleId=${darurat?.id}'),
+              onTap: () => context.push('/article?articleId=${darurat?.id}'),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
@@ -84,19 +103,28 @@ class _EducationScreenState extends ConsumerState<EducationScreen> {
           ),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 96),
+              padding: pagePaddingWithBottomNav,
               children: [
-                NeumoField(
-                  controller: _search,
-                  onChanged: (v) => setState(() => _query = v),
-                  placeholder: 'Cari artikel, kata, atau topik…',
-                  icon: Icons.search,
+                NeumoShowcase(
+                  key: _searchKey,
+                  title: 'Cari Artikel',
+                  description: 'Ketik kata kunci untuk mencari artikel tentang pneumonia, gizi, atau kesehatan anak.',
+                  child: NeumoField(
+                    controller: _search,
+                    onChanged: (v) => setState(() => _query = v),
+                    placeholder: 'Cari artikel, kata, atau topik…',
+                    icon: Icons.search,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 // Featured
-                GestureDetector(
-                  onTap: () => context.go('/article?articleId=${featured?.id}'),
-                  child: Container(
+                NeumoShowcase(
+                  key: _featuredKey,
+                  title: 'Artikel Unggulan',
+                  description: 'Artikel rekomendasi penting yang harus dibaca untuk memahami kondisi anak.',
+                  child: GestureDetector(
+                    onTap: () => context.push('/article?articleId=${featured?.id}'),
+                    child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(24),
                       gradient: const LinearGradient(
@@ -115,93 +143,94 @@ class _EducationScreenState extends ConsumerState<EducationScreen> {
                       Text('${featured?.readTime ?? ''} baca · ${featured?.category ?? ''}',
                           style: const TextStyle(fontSize: 12.5, color: Colors.white70)),
                     ]),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
                 // Category chips
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(children: [
-                    for (final c in _cats)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: GestureDetector(
-                          onTap: () => setState(() => _cat = c),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: _cat == c ? AppColors.primary : (dark ? AppColors.darkSurface : AppColors.lightSurface),
-                              borderRadius: BorderRadius.circular(999),
-                              border: _cat == c ? null : Border.all(color: AppColors.lightBorder),
+                NeumoShowcase(
+                  key: _categoryKey,
+                  title: 'Filter Kategori',
+                  description: 'Pilih kategori seperti Pneumonia, Deteksi, Gizi, atau Darurat untuk menyaring artikel.',
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(children: [
+                      for (final c in _cats)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: GestureDetector(
+                            onTap: () => setState(() => _cat = c),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: _cat == c ? AppColors.primary : (dark ? AppColors.darkSurface : AppColors.lightSurface),
+                                borderRadius: BorderRadius.circular(999),
+                                border: _cat == c ? null : Border.all(color: AppColors.lightBorder),
+                              ),
+                              child: Text(c,
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: _cat == c ? Colors.white : (dark ? AppColors.darkMuted : AppColors.lightMuted))),
                             ),
-                            child: Text(c,
-                                style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: _cat == c ? Colors.white : (dark ? AppColors.darkMuted : AppColors.lightMuted))),
                           ),
                         ),
-                      ),
-                  ]),
+                    ]),
+                  ),
                 ),
                 const SizedBox(height: 20),
                 Text('Artikel Terbaru', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: ink)),
                 const SizedBox(height: 12),
                 // Article grid
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  childAspectRatio: 1.15,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  children: [
-                    for (final a in articles) _ArticleCard(article: a),
-                  ],
+                NeumoShowcase(
+                  key: _articlesKey,
+                  title: 'Daftar Artikel',
+                  description: 'Semua artikel terbaru yang tersedia. Tap untuk membaca selengkapnya.',
+                  child: LayoutBuilder(
+                    builder: (context, constraints) => Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        for (final a in articles)
+                          SizedBox(
+                            width: (constraints.maxWidth - 12) / 2,
+                            child: _ArticleCard(article: a),
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 20),
                 Text('Kenali Penyakit', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: ink)),
                 const SizedBox(height: 12),
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  childAspectRatio: 1.35,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  children: [
-                    for (final (name, emoji, desc, colors) in _diseases)
-                      _DiseaseCard(name: name, emoji: emoji, desc: desc, colors: colors),
-                  ],
+                LayoutBuilder(
+                  builder: (context, constraints) => Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      for (final (name, emoji, desc, colors) in _diseases)
+                        SizedBox(
+                          width: (constraints.maxWidth - 12) / 2,
+                          child: _DiseaseCard(name: name, emoji: emoji, desc: desc, colors: colors),
+                        ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 20),
                 Text('Tips Sehat', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: ink)),
                 const SizedBox(height: 12),
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  childAspectRatio: 1.35,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  children: [
-                    for (final (icon, title, desc) in _tips)
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: dark ? AppColors.darkSurface : AppColors.lightSurface2,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: AppColors.lightBorder),
+                LayoutBuilder(
+                  builder: (context, constraints) => Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      for (final (icon, title, desc) in _tips)
+                        SizedBox(
+                          width: (constraints.maxWidth - 12) / 2,
+                          child: _TipCard(icon: icon, title: title, desc: desc),
                         ),
-                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text(icon, style: const TextStyle(fontSize: 24)),
-                          const Spacer(),
-                          Text(title, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 2),
-                          Text(desc, style: const TextStyle(fontSize: 12, color: AppColors.lightMuted, height: 1.4)),
-                        ]),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -230,7 +259,7 @@ class _ArticleCard extends StatelessWidget {
     final muted = dark ? AppColors.darkMuted : AppColors.lightMuted;
     final ink = dark ? AppColors.darkInk : AppColors.lightInk;
     return GestureDetector(
-      onTap: () => context.go('/article?articleId=${article.id}'),
+      onTap: () => context.push('/article?articleId=${article.id}'),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -238,7 +267,7 @@ class _ArticleCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: AppColors.lightBorder),
         ),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
           Row(children: [
             Container(
               width: 36,
@@ -250,7 +279,7 @@ class _ArticleCard extends StatelessWidget {
             const SizedBox(width: 8),
             NeumoChip(tone: _tone(), child: Text(article.tag)),
           ]),
-          const Spacer(),
+          const SizedBox(height: 14),
           Text(article.title, maxLines: 2, overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: ink, height: 1.25)),
           const SizedBox(height: 6),
@@ -281,7 +310,7 @@ class _DiseaseCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.lightBorder),
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
         Container(
           width: 48,
           height: 48,
@@ -292,11 +321,44 @@ class _DiseaseCard extends StatelessWidget {
           ),
           child: Text(emoji, style: const TextStyle(fontSize: 24)),
         ),
-        const Spacer(),
+        const SizedBox(height: 12),
         Text(name, style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
         Text(desc, style: TextStyle(fontSize: 12.5, color: muted, height: 1.4)),
       ]),
+    );
+  }
+}
+
+class _TipCard extends StatelessWidget {
+  const _TipCard({required this.icon, required this.title, required this.desc});
+
+  final String icon;
+  final String title;
+  final String desc;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: dark ? AppColors.darkSurface : AppColors.lightSurface2,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.lightBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(icon, style: const TextStyle(fontSize: 24)),
+          const SizedBox(height: 12),
+          Text(title, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text(desc,
+              style: TextStyle(fontSize: 12, color: dark ? AppColors.darkMuted : AppColors.lightMuted, height: 1.4)),
+        ],
+      ),
     );
   }
 }

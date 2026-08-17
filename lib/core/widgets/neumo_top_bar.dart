@@ -26,21 +26,23 @@ class NeumoTopBar extends StatelessWidget implements PreferredSizeWidget {
       color: transparent ? Colors.transparent : bg.withValues(alpha: 0.85),
       child: Row(
         children: [
-          InkWell(
-            onTap: onBack ?? (Navigator.of(context).canPop() ? () => Navigator.of(context).pop() : null),
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: surface,
-                border: Border.all(color: border),
-                borderRadius: BorderRadius.circular(12),
+          if (onBack != null || Navigator.of(context).canPop()) ...[
+            InkWell(
+              onTap: onBack ?? () => Navigator.of(context).pop(),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: surface,
+                  border: Border.all(color: border),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.arrow_back_ios_new, size: 18, color: null),
               ),
-              child: const Icon(Icons.arrow_back_ios_new, size: 18, color: null),
             ),
-          ),
-          const SizedBox(width: 12),
+            const SizedBox(width: 12),
+          ],
           Expanded(
             child: Text(title,
                 maxLines: 1,

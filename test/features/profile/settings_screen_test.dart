@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:neumoi_d/core/connectivity/connectivity_service.dart';
 import 'package:neumoi_d/core/sync/sync_queue.dart';
 import 'package:neumoi_d/core/theme/app_theme.dart';
+import 'package:neumoi_d/data/mock/mock_repositories.dart';
 import 'package:neumoi_d/features/profile/screens/settings_screen.dart';
 import 'package:neumoi_d/state/app_providers.dart';
 
@@ -21,6 +22,7 @@ void main() {
 
   testWidgets('settings switches theme to dark', (tester) async {
     final container = ProviderContainer(overrides: [
+      settingsRepositoryProvider.overrideWithValue(MockSettingsRepository()),
       connectivityServiceProvider.overrideWithValue(_FakeConnectivity()),
       syncQueueProvider.overrideWithValue(SyncQueue()),
     ]);

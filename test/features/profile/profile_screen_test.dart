@@ -8,8 +8,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:neumoi_d/core/connectivity/connectivity_service.dart';
 import 'package:neumoi_d/core/sync/sync_queue.dart';
 import 'package:neumoi_d/core/theme/app_theme.dart';
+import 'package:neumoi_d/data/mock/mock_repositories.dart';
 import 'package:neumoi_d/features/profile/screens/profile_screen.dart';
 import 'package:neumoi_d/state/app_providers.dart';
+import 'package:showcaseview/showcaseview.dart';
+import '../../helpers/noop_showcase_service.dart';
 
 class _FakeConnectivity implements ConnectivityService {
   final _controller = StreamController<bool>.broadcast();
@@ -18,12 +21,21 @@ class _FakeConnectivity implements ConnectivityService {
 }
 
 void main() {
-  setUp(() => GoogleFonts.config.allowRuntimeFetching = false);
+  setUp(() {
+    GoogleFonts.config.allowRuntimeFetching = false;
+    ShowcaseView.register(enableShowcase: false);
+  });
+  tearDown(() => ShowcaseView.get().unregister());
 
   testWidgets('profile shows user info, menu, and updates theme', (tester) async {
     final container = ProviderContainer(overrides: [
+      profileRepositoryProvider.overrideWithValue(MockProfileRepository()),
+      childRepositoryProvider.overrideWithValue(MockChildRepository()),
+      notificationRepositoryProvider.overrideWithValue(MockNotificationRepository()),
+      settingsRepositoryProvider.overrideWithValue(MockSettingsRepository()),
       connectivityServiceProvider.overrideWithValue(_FakeConnectivity()),
       syncQueueProvider.overrideWithValue(SyncQueue()),
+      showcaseServiceProvider.overrideWithValue(NoopShowcaseService()),
     ]);
     addTearDown(container.dispose);
 
@@ -45,7 +57,7 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('Ibu Sari'), findsOneWidget);
+    expect(find.text('Demo NeumoAid'), findsOneWidget);
     expect(find.text('Kelola Anak'), findsOneWidget);
     expect(find.text('Privasi & Keamanan'), findsOneWidget);
 

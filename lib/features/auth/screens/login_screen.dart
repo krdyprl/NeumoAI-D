@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/services/tour_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/neumo_button.dart';
 import '../../../core/widgets/neumo_field.dart';
+import '../../../state/app_providers.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
+  bool _submitting = false;
 
   @override
   void dispose() {
@@ -23,7 +27,37 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _submit() => context.go('/home');
+  Future<void> _submit() async {
+    final email = _email.text.trim();
+    final password = _password.text;
+    if (email.isEmpty || password.isEmpty) {
+      _show('Isi email dan kata sandi.');
+      return;
+    }
+
+    setState(() => _submitting = true);
+    final error = await ref.read(authProvider.notifier).login(
+          email: email,
+          password: password,
+        );
+    if (!mounted) return;
+    setState(() => _submitting = false);
+
+    if (error != null) {
+      _show(error);
+      return;
+    }
+
+    // Guided tour on first login.
+    await ref.read(tourControllerProvider.notifier).start();
+    if (mounted) context.go('/home');
+  }
+
+  void _show(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 24),
-              const Icon(Icons.coronavirus, color: AppColors.primary, size: 48),
+              Image.asset('assets/images/logo_neumoai.png', width: 64, height: 64),
               const SizedBox(height: 20),
               Text('Selamat datang kembali', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: ink)),
               const SizedBox(height: 6),
@@ -54,7 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              NeumoButton(expand: true, size: NeumoSize.lg, label: 'Masuk', onPressed: _submit),
+              NeumoButton(expand: true, size: NeumoSize.lg, label: _submitting ? 'Masuk…' : 'Masuk', onPressed: _submitting ? null : _submit),
               const SizedBox(height: 24),
               const Row(children: [
                 Expanded(child: Divider()),

@@ -61,4 +61,13 @@ void main() {
     await repo.setOnboardingDone(true);
     expect(await repo.isOnboardingDone(), isTrue);
   });
+
+  test('MockSettingsRepository tracks showcase state', () async {
+    final repo = MockSettingsRepository();
+    expect(await repo.isShowcaseDone('home'), isFalse);
+    await repo.markShowcaseDone('home');
+    expect(await repo.isShowcaseDone('home'), isTrue);
+    await repo.resetShowcase('home');
+    expect(await repo.isShowcaseDone('home'), isFalse);
+  });
 }

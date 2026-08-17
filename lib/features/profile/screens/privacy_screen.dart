@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/spacing.dart';
 import '../../../core/widgets/neumo_top_bar.dart';
 
 class PrivacyScreen extends StatefulWidget {
@@ -82,7 +83,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
             const NeumoTopBar(title: 'Privasi & Keamanan'),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 96),
+                padding: pagePadding,
                 children: [
                   Container(
                     padding: const EdgeInsets.all(20),

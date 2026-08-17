@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/spacing.dart';
 import '../../../core/widgets/neumo_segmented.dart';
 import '../../../core/widgets/neumo_top_bar.dart';
 import '../../../state/app_providers.dart';
+import '../widgets/neumo_showcase_menu.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -24,7 +26,7 @@ class SettingsScreen extends ConsumerWidget {
             const NeumoTopBar(title: 'Pengaturan'),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 96),
+                padding: pagePadding,
                 children: [
                   Container(
                     padding: const EdgeInsets.all(20),
@@ -57,6 +59,40 @@ class SettingsScreen extends ConsumerWidget {
                                   .read(themeKeyProvider.notifier)
                                   .setThemeKey(v),
                         ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color:
+                          dark ? AppColors.darkSurface : AppColors.lightSurface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: border),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Bantuan',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: ink,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Kelola tutorial panduan penggunaan fitur. Reset untuk menampilkan kembali.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: muted,
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const NeumoShowcaseMenu(),
                       ],
                     ),
                   ),

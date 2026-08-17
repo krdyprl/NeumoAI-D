@@ -3,23 +3,52 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/services/tour_controller.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/spacing.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/neumo_card.dart';
 import '../../../core/widgets/neumo_chip.dart';
 import '../../../core/widgets/neumo_notif_bell.dart';
 import '../../../core/widgets/neumo_ring.dart';
+import '../../../core/widgets/neumo_showcase.dart';
 import '../../../core/widgets/neumo_sync_status.dart';
 import '../../../models/child.dart';
 import '../../../models/enums.dart';
 import '../../../models/screening.dart';
 import '../../../state/app_providers.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  final GlobalKey _healthKey = GlobalKey();
+  final GlobalKey _quickActionsKey = GlobalKey();
+  final GlobalKey _recommendationKey = GlobalKey();
+  final GlobalKey _healthCentersKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+WidgetsBinding.instance.addPostFrameCallback((_) {
+      final tour = ref.read(tourControllerProvider.notifier);
+      tour.registerSteps('/home', [
+        TourStep(_healthKey, 'Selamat Datang',
+            'Ini adalah Beranda. Lihat ringkasan kondisi kesehatan si kecil dan akses cepat ke fitur utama aplikasi.'),
+        TourStep(_quickActionsKey, 'Aksi Cepat',
+            'Tap "Mulai Skrining" untuk mulai pemeriksaan, atau gunakan pintasan ke Riwayat, Edukasi, dan Faskes.'),
+      ]);
+      // First entry to Home after login starts the guided tour.
+      tour.start();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final profile = ref.watch(profileProvider).valueOrNull;
     final children = ref.watch(childrenProvider).valueOrNull ?? const <Child>[];
     final screenings = ref.watch(screeningsProvider).valueOrNull ?? const <Screening>[];
@@ -43,9 +72,10 @@ class HomeScreen extends ConsumerWidget {
         : AppColors.lightInk;
 
     return Scaffold(
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 96),
-        children: [
+      body: SafeArea(
+        child: ListView(
+          padding: homePagePadding,
+          children: [
           Row(
             children: [
               Expanded(
@@ -64,25 +94,45 @@ class HomeScreen extends ConsumerWidget {
               ),
               NeumoSyncStatus(pending: pendingSync),
               const SizedBox(width: 10),
-              NeumoNotifBell(unread: unread, onTap: () => context.go('/notifications')),
+              NeumoNotifBell(unread: unread, onTap: () => context.push('/notifications')),
             ],
           ),
           const SizedBox(height: 16),
           _ChildSelector(children: children, currentId: currentId),
           const SizedBox(height: 16),
-          _HealthStatusCard(
-            child: child,
-            latest: latest,
-            riskColor: riskColor,
-            riskLabel: riskLabel,
-            riskDesc: riskDesc,
-          ),
-          const SizedBox(height: 16),
-          _QuickActions(),
-          const SizedBox(height: 16),
-          _LatestRecommendation(childName: child?.name.split(' ').first ?? 'si kecil'),
-          const SizedBox(height: 20),
-          _HealthCenters(),
+NeumoShowcase(
+              key: _healthKey,
+              title: 'Status Kesehatan',
+             description: 'Tampilan kondisi napas terbaru anak berdasarkan hasil skrining AI.',
+             child: _HealthStatusCard(
+               child: child,
+               latest: latest,
+               riskColor: riskColor,
+               riskLabel: riskLabel,
+               riskDesc: riskDesc,
+             ),
+           ),
+           const SizedBox(height: 16),
+NeumoShowcase(
+              key: _quickActionsKey,
+              title: 'Aksi Cepat',
+             description: 'Akses cepat ke skrining, riwayat, edukasi, dan faskes terdekat.',
+             child: _QuickActions(),
+           ),
+           const SizedBox(height: 16),
+NeumoShowcase(
+              key: _recommendationKey,
+              title: 'Rekomendasi AI',
+             description: 'Saran dan rekomendasi medis terbaru dari dokter berdasarkan data skrining.',
+             child: _LatestRecommendation(childName: child?.name.split(' ').first ?? 'si kecil'),
+           ),
+           const SizedBox(height: 20),
+NeumoShowcase(
+              key: _healthCentersKey,
+              title: 'Fasilitas Kesehatan',
+             description: 'Daftar puskesmas dan klinik terdekat untuk referensi konsultasi lanjutan.',
+             child: _HealthCenters(),
+           ),
           if (pendingSync > 0) ...[
             const SizedBox(height: 16),
             Container(
@@ -104,6 +154,7 @@ class HomeScreen extends ConsumerWidget {
             ),
           ],
         ],
+      ),
       ),
     );
   }
@@ -156,7 +207,7 @@ class _ChildSelector extends ConsumerWidget {
               ),
             ),
           GestureDetector(
-            onTap: () => context.go('/child-form'),
+            onTap: () => context.push('/child-form'),
             child: Container(
               width: 110,
               alignment: Alignment.center,
@@ -279,22 +330,23 @@ class _QuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = <(IconData, String, VoidCallback)>[
-      (Icons.medical_services, 'Mulai Skrining', () => context.go('/symptoms')),
+      (Icons.medical_services, 'Mulai Skrining', () => context.push('/symptoms')),
       (Icons.show_chart, 'Riwayat Kesehatan', () => context.go('/history')),
       (Icons.menu_book_outlined, 'Edukasi Napas', () => context.go('/education')),
       (Icons.local_hospital_outlined, 'Faskes Terdekat', () {}),
     ];
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      childAspectRatio: 1.5,
-      children: [
-        for (final (icon, label, onTap) in items)
-          _QuickActionTile(icon: icon, label: label, primary: label == 'Mulai Skrining', onTap: onTap),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) => Wrap(
+        spacing: 12,
+        runSpacing: 12,
+        children: [
+          for (final (icon, label, onTap) in items)
+            SizedBox(
+              width: (constraints.maxWidth - 12) / 2,
+              child: _QuickActionTile(icon: icon, label: label, primary: label == 'Mulai Skrining', onTap: onTap),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -324,9 +376,10 @@ class _QuickActionTile extends StatelessWidget {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 26, color: primary ? Colors.white : AppColors.primary),
-            const Spacer(),
+            const SizedBox(height: 14),
             Text(label,
                 style: TextStyle(
                     fontSize: 13.5,
@@ -347,7 +400,7 @@ class _LatestRecommendation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () => context.go('/result?screeningId=s1'),
+      onTap: () => context.push('/result?screeningId=s1'),
       borderRadius: BorderRadius.circular(24),
       child: Container(
         padding: const EdgeInsets.all(20),

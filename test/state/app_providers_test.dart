@@ -1,10 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:neumoi_d/data/mock/mock_repositories.dart';
 import 'package:neumoi_d/state/app_providers.dart';
 
 void main() {
+  ProviderContainer buildContainer() => ProviderContainer(overrides: [
+        childRepositoryProvider.overrideWithValue(MockChildRepository()),
+        screeningRepositoryProvider.overrideWithValue(MockScreeningRepository()),
+        settingsRepositoryProvider.overrideWithValue(MockSettingsRepository()),
+      ]);
+
   test('providers load from mock repositories', () async {
-    final container = ProviderContainer();
+    final container = buildContainer();
     addTearDown(container.dispose);
 
     final children = await container.read(childrenProvider.future);
@@ -21,7 +28,7 @@ void main() {
   });
 
   test('currentChildIdProvider.select updates persisted value', () async {
-    final container = ProviderContainer();
+    final container = buildContainer();
     addTearDown(container.dispose);
 
     await container.read(currentChildIdProvider.notifier).select('c2');

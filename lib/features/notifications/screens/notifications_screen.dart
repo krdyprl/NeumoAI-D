@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/spacing.dart';
 import '../../../core/widgets/neumo_top_bar.dart';
 import '../../../models/app_notification.dart';
 import '../../../models/enums.dart';
@@ -72,7 +73,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           ),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 96),
+              padding: pagePadding,
               children: [
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
@@ -112,7 +113,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       onTap: () {
                         ref.read(notificationsProvider.notifier).markRead(n.id);
                         if (n.type == NotifType.ai || n.type == NotifType.medical) {
-                          context.go('/result');
+                          context.push('/result');
                         }
                       },
                       child: Container(

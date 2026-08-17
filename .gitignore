@@ -34,3 +34,8 @@ CLAUDE.md
 
 # Legacy React project archived
 dump_file/
+
+# Training data & model outputs (Kaggle) - jangan di-commit
+trainAI/
+model/
+
